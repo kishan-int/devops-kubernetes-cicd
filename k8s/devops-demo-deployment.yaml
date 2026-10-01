@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: devops-demo-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: devops-demo
+
+  template:
+    metadata:
+      labels:
+        app: devops-demo
+
+    spec:
+      containers:
+        - name: devops-demo
+          image: devops-demo-app:2.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 5000
+
+          env:
+            - name: ENVIRONMENT
+              value: "kubernetes"
+
+          readinessProbe: #"Is this Pod ready to receive traffic?"
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe: #"Is this application still alive?"
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
