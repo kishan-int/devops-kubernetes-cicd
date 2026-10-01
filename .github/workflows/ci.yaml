@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -45,3 +42,21 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/devops-demo-app:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/devops-demo-app:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/devops-demo-deployment \
+            devops-demo=ghcr.io/${{ github.repository_owner }}/devops-demo-app:${{ github.sha }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/devops-demo-deployment --timeout=120s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -l app=devops-demo
